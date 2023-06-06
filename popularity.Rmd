@@ -1,0 +1,113 @@
+# Audio Features and Song Popularity
+
+Yigang Meng
+
+5/2/2023
+
+## Data collection and cleaning
+
+```{r}
+library(ggplot2)
+library(corrplot)
+library(dbplyr)
+library(factoextra)
+```
+
+```{r}
+df <- read.csv("spotify_dataset.csv")
+```
+
+```{r}
+df <- na.omit(df)
+df <- df[!duplicated(df), ]
+```
+
+```{r}
+dim(df)
+colnames(df)
+head(df)
+```
+
+## **Data Analysis**
+
+#### Correlation table and Plot
+
+Get the correlations between features and popularity, and sort them decreasingly. From the table below, we observed a strong negative correlation between a song's instrumentalness(probability of being instrumental), acousticness(probability of being acoustics), and duration (in milliseconds) and its popularity. Conversely, we observed a strong positive correlation between a song's danceability, loudness, valence, and energy and its popularity.
+
+```{r}
+correlations <- cor(df[, c("danceability", "energy", "loudness", "mode", "speechiness", 
+                           "acousticness", "instrumentalness", "liveness", "valence", "tempo", 
+                           "duration_ms", "time_signature", "chorus_hit", "sections", "popularity")])
+
+cor_df <- sort(correlations["popularity", ]) %>% as.data.frame()
+colnames(cor_df) <- c("correlation")
+cor_df
+```
+
+Further, we utilize corrplot to generate an upper correlation matrix. We see that danceability, energy, and loudness are sharing common underlying features that may contribute to popularity.
+
+```{r}
+corrplot(correlations, method = "circle", "upper")
+```
+
+#### Person's test on correlation
+
+Hypothesis:
+
+$H_0$ : There is no correlation between the variables.
+
+$H_1$ : There is a correlation between the variables.
+
+Given that the p-values from our correlation tests are all significantly less than 0.05, we can confidently reject the null hypothesis of no correlation on the significance level of 0.05, and conclude that there are indeed statistically significant relationships between danceability, loudness, and valence with popularity in the Spotify dataset
+
+```{r}
+cor.test(df$danceability, df$popularity, method = "pearson")
+cor.test(df$loudness, df$popularity, method = "pearson")
+cor.test(df$valence, df$popularity, method = "pearson")
+```
+
+## K-means clustering on features
+
+From the matrix, we retrieve six features that are most correlated to the popularity as a data frame, and we apply k-means clustering to see it there is any underlying pattern. We choose K as 9 from the elbow method by the elbow method.
+
+```{r}
+features <- df[, c("track","danceability", "energy", "loudness", "popularity", "instrumentalness", "acousticness")]
+
+scaled_features <- scale(features[,-1])
+
+wss <- (nrow(scaled_features)-1)*sum(apply(scaled_features,2,var))
+for (k in 1:15) {
+    wss[k] <- sum(kmeans(scaled_features, centers=k)$withinss)
+}
+plot(1:15, wss, type="b", xlab="Number of Clusters",
+    ylab="Within groups sum of squares")
+```
+
+```{r}
+# K-means clustering
+set.seed(123)
+km.res <- kmeans(scaled_features, 6, nstart = 20)
+```
+
+```{r}
+km.res$size
+```
+
+```{r}
+fviz_cluster(km.res, data = scaled_features)
+```
+
+In cluster 2, we observe a interesting pattern that the acousticness can contribute to one's popularity if it is slow and quite, which lead us to think that in the music industry, acoustic music can be popular if they are more traditional, solely performed in one instrument, and slowly.
+
+And we can also come up with an obvious conclusion that if one has danceability, energy, and loudness, one is more likely to be popular.
+
+```{r}
+cluster_summary <- aggregate(scaled_features, by=list(cluster=km.res$cluster), FUN=mean)
+cluster_summary
+```
+
+## Conclusion
+
+In this analysis, we delve into the intricacies of Spotify music data, focusing on their distinct features. By employing statistical techniques such as correlation tables and plots, Pearson's correlation test, and K-means clustering, we unravel the impact of these features on the popularity of the tracks. Our findings offer a comprehensive perspective on how specific characteristics can influence the listeners' preferences, thereby affecting a song's overall popularity.
+
+In Cluster 2, an intriguing pattern emerges suggesting that a song's acousticness can boost its popularity if it is slow and tranquil. This observation prompts us to infer that within the music industry, acoustic music can gain popularity if it resonates with traditional styles, focuses on a single instrument, and maintains a slow tempo.
