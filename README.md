@@ -6,3 +6,6 @@ The dataset consists of several song features including danceability, energy, lo
 1. Correlation Analysis(Pearson's test)
 2. Hypothesis Test
 3. K-means Clustering
+
+
+## Result is shown in the HTML file
