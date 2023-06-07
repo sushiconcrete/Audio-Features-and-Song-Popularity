@@ -97,7 +97,7 @@ km.res$size
 fviz_cluster(km.res, data = scaled_features)
 ```
 
-In cluster 2, we observe a interesting pattern that the acousticness can contribute to one's popularity if it is slow and quite, which lead us to think that in the music industry, acoustic music can be popular if they are more traditional, solely performed in one instrument, and slowly.
+In cluster 2, we observe a interesting pattern that the acousticness can contribute to one's popularity if it is slow and quiet, which lead us to think that in the music industry, acoustic music can be popular if they are more traditional, solely and slowly performed in one instrument.
 
 And we can also come up with an obvious conclusion that if one has danceability, energy, and loudness, one is more likely to be popular.
 
